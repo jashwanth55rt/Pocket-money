@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+<script type="module">
+  import fbconfig from './firebase-applet-config.json' assert { type: "json" };
+  const app = firebase.initializeApp(fbconfig);
+  try {
+    const db = firebase.firestore(app, fbconfig.firestoreDatabaseId);
+    console.log("DB initialized via var args", db);
+  } catch(e) { console.error("Error 1", e); }
+  
+</script>
+</body>
+</html>

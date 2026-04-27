@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title id="adminPageTitle">Pocket Money Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        :root {
+            --bg:          #0F0F14;
+            --bg2:         #16161F;
+            --surface:     #1C1C28;
+            --surface2:    #222232;
+            --surface3:    #2A2A3E;
+            --sidebar-w:   252px;
+            --primary:     #30D158;
+            --primary-dk:  #25A244;
+            --primary-glow:rgba(48,209,88,.25);
+            --blue:        #3B82F6;
+            --orange:      #F59E0B;
+            --red:         #EF4444;
+            --purple:      #A855F7;
+            --yellow:      #EAB308;
+            --cyan:        #06B6D4;
+            --pink:        #EC4899;
+            --label:       #F1F1F5;
+            --label2:      rgba(241,241,245,.6);
+            --label3:      rgba(241,241,245,.35);
+            --sep:         rgba(255,255,255,.07);
+            --fill:        rgba(255,255,255,.05);
+            --fill2:       rgba(255,255,255,.09);
+            --shadow:      0 4px 24px rgba(0,0,0,.4);
+            --shadow-lg:   0 12px 48px rgba(0,0,0,.5);
+            --radius-sm:   10px;
+            --radius:      14px;
+            --radius-lg:   20px;
+            --radius-xl:   26px;
+            --font:        'Sora', -apple-system, sans-serif;
+            --header-h:    66px;
+        }
+        html,body { height:100%; }
+        body { font-family:var(--font); background:var(--bg); color:var(--label); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+
+        /* ── LOADER ── */
+        #loader {
+            position:fixed; inset:0; z-index:9999;
+            background:linear-gradient(135deg,#0F0F14 0%,#1a2a1a 50%,#0F0F14 100%);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+        }
+        .loader-ring {
+            width:72px; height:72px; border-radius:20px;
+            background:linear-gradient(135deg,var(--primary),var(--primary-dk));
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 0 40px var(--primary-glow);
+            overflow:hidden;
+        }
+        .loader-ring img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .loader-text { font-size:20px; font-weight:700; color:var(--label); letter-spacing:-.3px; }
+        .loader-bar { width:160px; height:3px; background:var(--fill); border-radius:99px; overflow:hidden; }
+        .loader-bar-fill { height:100%; background:linear-gradient(90deg,var(--primary),var(--cyan)); border-radius:99px; animation:barLoad 1.4s ease-in-out infinite; }
+        @keyframes barLoad { 0%{width:0;margin-left:0} 50%{width:100%;margin-left:0} 100%{width:0;margin-left:100%} }
+
+        /* ── AUTH ── */
+        #authScreen {
+            display:none; min-height:100vh;
+            background:radial-gradient(ellipse at 50% 0%, rgba(48,209,88,.12) 0%, transparent 60%), var(--bg);
+            align-items:center; justify-content:center; padding:20px;
+        }
+        #authScreen.visible { display:flex; }
+        .auth-card {
+            background:var(--surface); border-radius:var(--radius-xl); padding:40px 36px;
+            width:100%; max-width:420px; box-shadow:var(--shadow-lg);
+            border:1px solid var(--sep);
+            animation:fadeUp .35s ease;
+        }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .auth-logo-wrap { text-align:center; margin-bottom:32px; }
+        .auth-logo-icon {
+            width:72px; height:72px; border-radius:20px;
+            background:linear-gradient(135deg,var(--primary),var(--primary-dk));
+            display:inline-flex; align-items:center; justify-content:center;
+            font-size:28px; font-weight:800; color:white; margin-bottom:14px;
+            box-shadow:0 8px 32px var(--primary-glow); overflow:hidden;
+        }
+        .auth-logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .auth-logo-wrap h2 { font-size:22px; font-weight:700; color:var(--label); }
+        .auth-logo-wrap p { font-size:13px; color:var(--label3); margin-top:4px; }
+        .field-lbl { display:block; font-size:12px; font-weight:600; color:var(--label3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:7px; }
+        .field {
+            width:100%; padding:13px 16px; background:var(--fill2); border:1.5px solid var(--sep);
+            border-radius:var(--radius-sm); font-size:14px; font-family:var(--font);
+            color:var(--label); outline:none; transition:all .2s;
+        }
+        .field:focus { background:var(--surface3); border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-glow); }
+        .field::placeholder { color:var(--label3); }
+        textarea.field { resize:vertical; min-height:80px; }
+        select.field { cursor:pointer; }
+        input[type=color].field { height:48px; padding:6px; cursor:pointer; }
+        .field-wrap { margin-bottom:18px; }
+        .btn-primary {
+            width:100%; padding:14px; border:none; border-radius:var(--radius-sm);
+            font-size:15px; font-weight:700; font-family:var(--font); cursor:pointer;
+            background:linear-gradient(135deg,var(--primary),var(--primary-dk));
+            color:white; box-shadow:0 4px 20px var(--primary-glow);
+            transition:transform .15s, opacity .2s; letter-spacing:-.2px;
+        }
+        .btn-primary:active { transform:scale(.97); }
+        .btn-primary:hover { opacity:.9; }
+        .field-error { font-size:13px; color:var(--red); margin-top:10px; text-align:center; display:none; }
+
+        /* ── LAYOUT ── */
+        #adminContainer { display:none; height:100vh; }
+        #adminContainer.visible { display:flex; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width:var(--sidebar-w); background:var(--surface);
+            height:100vh; position:fixed; left:0; top:0; z-index:100;
+            display:flex; flex-direction:column;
+            border-right:1px solid var(--sep);
+            transition:width .25s ease; overflow:hidden;
+        }
+        .sidebar-header { padding:22px 18px 18px; border-bottom:1px solid var(--sep); }
+        .sidebar-brand { display:flex; align-items:center; gap:12px; }
+        .sidebar-logo {
+            width:38px; height:38px; min-width:38px; border-radius:11px;
+            background:linear-gradient(135deg,var(--primary),var(--primary-dk));
+            display:flex; align-items:center; justify-content:center;
+            font-size:17px; font-weight:800; color:white; overflow:hidden;
+        }
+        .sidebar-logo img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+        .brand-name { font-size:15px; font-weight:700; color:var(--label); letter-spacing:-.2px; }
+        .brand-sub { font-size:11px; color:var(--label3); margin-top:1px; }
+        .sidebar-nav { flex:1; padding:12px 0; overflow-y:auto; scrollbar-width:none; }
+        .sidebar-nav::-webkit-scrollbar { display:none; }
+        .nav-section-lbl { font-size:10px; font-weight:700; letter-spacing:1.2px; color:var(--label3); text-transform:uppercase; padding:14px 18px 6px; }
+        .nav-item {
+            display:flex; align-items:center; gap:12px; padding:11px 18px;
+            cursor:pointer; transition:all .2s; color:var(--label3);
+            border-left:3px solid transparent; white-space:nowrap;
+            margin:1px 0;
+        }
+        .nav-item:hover { background:var(--fill); color:var(--label2); }
+        .nav-item.active { background:rgba(48,209,88,.08); border-left-color:var(--primary); color:var(--primary); }
+        .ni-icon {
+            width:32px; height:32px; min-width:32px; border-radius:9px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:13px; background:var(--fill);
+        }
+        .nav-item.active .ni-icon { background:rgba(48,209,88,.15); color:var(--primary); }
+        .ni-label { font-size:13px; font-weight:600; }
+        .sidebar-footer { padding:14px 18px; border-top:1px solid var(--sep); }
+        .logout-btn {
+            display:flex; align-items:center; gap:10px; width:100%; padding:11px 14px;
+            background:rgba(239,68,68,.1); border:none; border-radius:var(--radius-sm);
+            color:var(--red); font-size:13px; font-weight:600; font-family:var(--font);
+            cursor:pointer; white-space:nowrap; transition:background .2s;
+        }
+        .logout-btn:hover { background:rgba(239,68,68,.2); }
+
+        /* ── MAIN ── */
+        .main-wrap { margin-left:var(--sidebar-w); display:flex; flex-direction:column; min-height:100vh; flex:1; }
+        .top-bar {
+            position:sticky; top:0; z-index:50; height:var(--header-h);
+            background:rgba(15,15,20,.85); backdrop-filter:blur(20px) saturate(180%);
+            border-bottom:1px solid var(--sep); padding:0 28px;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .page-title { font-size:19px; font-weight:700; color:var(--label); letter-spacing:-.3px; }
+        .top-bar-right { display:flex; align-items:center; gap:12px; }
+        .admin-chip {
+            display:flex; align-items:center; gap:8px; background:var(--surface2);
+            border-radius:50px; padding:6px 14px 6px 6px; border:1px solid var(--sep);
+        }
+        .admin-avatar {
+            width:30px; height:30px; border-radius:50%;
+            background:linear-gradient(135deg,var(--primary),var(--cyan));
+            display:flex; align-items:center; justify-content:center;
+            font-size:12px; font-weight:700; color:white;
+        }
+        .admin-lbl { font-size:12px; font-weight:600; color:var(--label2); }
+        .main-body { padding:24px 28px; flex:1; }
+
+        /* ── SECTIONS ── */
+        .section { display:none; animation:fadeIn .22s ease; }
+        .section.active { display:block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ── STAT CARDS ── */
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:22px; }
+        .stat-card {
+            background:var(--surface); border-radius:var(--radius);
+            padding:20px 18px; box-shadow:var(--shadow);
+            display:flex; flex-direction:column; gap:12px;
+            transition:transform .2s, box-shadow .2s; border:1px solid var(--sep);
+        }
+        .stat-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+        .stat-icon { width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:17px; color:white; }
+        .si-blue   { background:linear-gradient(135deg,var(--blue),#1D4ED8); }
+        .si-purple { background:linear-gradient(135deg,var(--purple),#7C3AED); }
+        .si-yellow { background:linear-gradient(135deg,var(--yellow),var(--orange)); }
+        .si-red    { background:linear-gradient(135deg,var(--red),#B91C1C); }
+        .si-green  { background:linear-gradient(135deg,var(--primary),var(--primary-dk)); }
+        .si-cyan   { background:linear-gradient(135deg,var(--cyan),#0891B2); }
+        .si-pink   { background:linear-gradient(135deg,var(--pink),#BE185D); }
+        .stat-val { font-size:28px; font-weight:800; color:var(--label); letter-spacing:-1px; line-height:1; }
+        .stat-lbl { font-size:12px; color:var(--label3); font-weight:500; }
+
+        /* ── CARDS ── */
+        .card {
+            background:var(--surface); border-radius:var(--radius); padding:22px;
+            box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--sep);
+        }
+        .card-title {
+            font-size:15px; font-weight:700; color:var(--label); letter-spacing:-.2px;
+            margin-bottom:18px; display:flex; align-items:center; justify-content:space-between;
+            padding-bottom:14px; border-bottom:1px solid var(--sep);
+        }
+        .two-col { display:grid; grid-template-columns:1fr 300px; gap:20px; }
+
+        /* ── TABLE ── */
+        .tbl-wrap { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; }
+        thead th {
+            padding:11px 14px; text-align:left; font-size:10px; font-weight:700;
+            text-transform:uppercase; letter-spacing:.6px; color:var(--label3);
+            background:var(--bg2); white-space:nowrap;
+        }
+        thead th:first-child { border-radius:8px 0 0 8px; }
+        thead th:last-child { border-radius:0 8px 8px 0; }
+        tbody tr { border-bottom:1px solid var(--sep); transition:background .15s; }
+        tbody tr:last-child { border-bottom:none; }
+        tbody tr:hover { background:var(--fill); }
+        tbody td { padding:12px 14px; font-size:13px; color:var(--label2); vertical-align:middle; }
+        .td-bold { font-weight:700; color:var(--label); }
+
+        /* ── BADGES ── */
+        .badge { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.1px; }
+        .badge-success { background:rgba(48,209,88,.12); color:#30D158; }
+        .badge-warning { background:rgba(245,158,11,.12); color:var(--orange); }
+        .badge-danger  { background:rgba(239,68,68,.12); color:var(--red); }
+        .badge-info    { background:rgba(59,130,246,.12); color:var(--blue); }
+        .badge-purple  { background:rgba(168,85,247,.12); color:var(--purple); }
+
+        /* ── BUTTONS ── */
+        .btn-sm {
+            padding:7px 13px; border-radius:7px; font-size:12px; font-weight:700;
+            font-family:var(--font); cursor:pointer; border:none; transition:opacity .2s, transform .1s; display:inline-flex; align-items:center; gap:5px;
+        }
+        .btn-sm:active { transform:scale(.95); }
+        .btn-sm:hover { opacity:.85; }
+        .bs-green  { background:linear-gradient(135deg,var(--primary),var(--primary-dk)); color:white; }
+        .bs-red    { background:linear-gradient(135deg,var(--red),#B91C1C); color:white; }
+        .bs-orange { background:linear-gradient(135deg,var(--orange),#D97706); color:white; }
+        .bs-blue   { background:linear-gradient(135deg,var(--blue),#1D4ED8); color:white; }
+        .bs-purple { background:linear-gradient(135deg,var(--purple),#7C3AED); color:white; }
+        .bs-gray   { background:var(--fill2); color:var(--label2); }
+
+        /* ── SEARCH BAR ── */
+        .search-bar { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+        .search-input {
+            flex:1; padding:10px 14px; background:var(--fill2); border:1.5px solid var(--sep);
+            border-radius:var(--radius-sm); font-size:13px; font-family:var(--font);
+            color:var(--label); outline:none; transition:all .2s;
+        }
+        .search-input:focus { background:var(--surface3); border-color:var(--primary); }
+        .search-input::placeholder { color:var(--label3); }
+
+        /* ── TABS ── */
+        .tab-row {
+            display:flex; gap:2px; background:var(--fill); border-radius:10px;
+            padding:3px; margin-bottom:18px; width:fit-content;
+        }
+        .tab-btn {
+            padding:7px 16px; border-radius:8px; font-size:12px; font-weight:600;
+            font-family:var(--font); color:var(--label3); cursor:pointer; border:none;
+            background:none; transition:all .2s;
+        }
+        .tab-btn.active { background:var(--surface2); color:var(--label); box-shadow:0 1px 4px rgba(0,0,0,.2); }
+
+        /* ── QUICK ACTIONS ── */
+        .quick-actions { display:flex; flex-direction:column; gap:8px; }
+        .qa-btn {
+            display:flex; align-items:center; gap:12px; padding:12px 14px;
+            border:none; border-radius:var(--radius-sm); background:var(--fill);
+            cursor:pointer; font-family:var(--font); font-size:13px; font-weight:600;
+            color:var(--label); transition:all .2s; text-align:left;
+        }
+        .qa-btn:hover { background:var(--fill2); }
+        .qa-btn:active { transform:scale(.98); }
+        .qa-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:13px; color:white; flex-shrink:0; }
+
+        /* ── FORM ── */
+        .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:14px; }
+        .form-row { margin-bottom:14px; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state { text-align:center; padding:56px 20px; color:var(--label3); }
+        .empty-state .empty-icon { font-size:40px; margin-bottom:12px; opacity:.3; }
+        .empty-state p { font-size:14px; font-weight:500; }
+
+        /* ── NOTIF ROWS ── */
+        .notif-row { display:flex; align-items:flex-start; gap:14px; padding:14px 0; border-bottom:1px solid var(--sep); }
+        .notif-row:last-child { border-bottom:none; }
+        .notif-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); flex-shrink:0; margin-top:5px; }
+        .notif-title { font-size:13px; font-weight:700; color:var(--label); margin-bottom:2px; }
+        .notif-msg { font-size:12px; color:var(--label2); }
+        .notif-date { font-size:11px; color:var(--label3); margin-top:3px; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width:900px) {
+            :root { --sidebar-w:66px; }
+            .sidebar-brand-text,.ni-label,.nav-section-lbl,.logout-btn span { display:none; }
+            .nav-item { justify-content:center; padding:14px; }
+            .nav-item .ni-icon { width:36px; height:36px; font-size:15px; }
+            .logout-btn { justify-content:center; padding:11px; }
+            .logout-btn i { margin:0; }
+            .two-col { grid-template-columns:1fr; }
+            .main-body { padding:16px; }
+            .top-bar { padding:0 16px; }
+        }
+        @media (max-width:640px) {
+            .stats-grid { grid-template-columns:1fr 1fr; }
+            .form-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+    <div class="loader-ring" id="loaderIcon"><img src="https://i.supaimg.com/f0a5f050-eb1b-4a70-992d-09b4d7ebc955/e97fb281-5ae7-48ce-863c-3d141a6a5651.jpg" alt="logo"></div>
+    <div class="loader-text" id="loaderText">Pocket Money Admin</div>
+    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<!-- AUTH -->
+<div id="authScreen">
+    <div class="auth-card">
+        <div class="auth-logo-wrap">
+            <div class="auth-logo-icon" id="authLogoIcon"><img src="https://i.supaimg.com/f0a5f050-eb1b-4a70-992d-09b4d7ebc955/e97fb281-5ae7-48ce-863c-3d141a6a5651.jpg" alt="logo"></div>
+            <h2 id="authBrandName">Pocket Money</h2>
+            <p>Admin Dashboard · Secure Access</p>
+        </div>
+        <button class="btn-primary" id="authBtn" onclick="adminAuthGoogle()">
+            <i class="fab fa-google"></i> Sign In with Google
+        </button>
+        <p id="loginError" class="field-error"></p>
+    </div>
+</div>
+
+<!-- ADMIN CONTAINER -->
+<div id="adminContainer">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo" id="sidebarLogo">
+                    <img src="https://i.supaimg.com/f0a5f050-eb1b-4a70-992d-09b4d7ebc955/e97fb281-5ae7-48ce-863c-3d141a6a5651.jpg" alt="logo">
+                </div>
+                <div class="sidebar-brand-text">
+                    <div class="brand-name" id="adminAppName">Pocket Money</div>
+                    <div class="brand-sub">Admin Panel</div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-lbl">Overview</div>
+            <div class="nav-item active" onclick="goSection('dashboard')">
+                <div class="ni-icon"><i class="fas fa-chart-pie"></i></div>
+                <span class="ni-label">Dashboard</span>
+            </div>
+            <div class="nav-section-lbl">Manage</div>
+            <div class="nav-item" onclick="goSection('users')">
+                <div class="ni-icon"><i class="fas fa-users"></i></div>
+                <span class="ni-label">Users</span>
+            </div>
+            <div class="nav-item" onclick="goSection('tasks')">
+                <div class="ni-icon"><i class="fas fa-list-check"></i></div>
+                <span class="ni-label">Tasks</span>
+            </div>
+            <div class="nav-item" onclick="goSection('withdrawals')">
+                <div class="ni-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <span class="ni-label">Withdrawals</span>
+            </div>
+            <div class="nav-section-lbl">Config</div>
+            <div class="nav-item" onclick="goSection('settings')">
+                <div class="ni-icon"><i class="fas fa-gear"></i></div>
+                <span class="ni-label">App Settings</span>
+            </div>
+            <div class="nav-item" onclick="goSection('notifications')">
+                <div class="ni-icon"><i class="fas fa-bell"></i></div>
+                <span class="ni-label">Notifications</span>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="adminLogout()">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="main-wrap">
+        <div class="top-bar">
+            <div class="page-title" id="pageTitle">Dashboard</div>
+            <div class="top-bar-right">
+                <div class="admin-chip">
+                    <div class="admin-avatar" id="adminAvatar">A</div>
+                    <span class="admin-lbl" id="adminEmail">admin</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-body">
+
+            <!-- DASHBOARD -->
+            <div id="dashboardSection" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon si-blue"><i class="fas fa-users"></i></div>
+                        <div><div class="stat-val" id="totalUsers">—</div><div class="stat-lbl">Total Users</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon si-green"><i class="fas fa-list-check"></i></div>
+                        <div><div class="stat-val" id="totalTasks">—</div><div class="stat-lbl">Active Tasks</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon si-orange"><i class="fas fa-wallet"></i></div>
+                        <div><div class="stat-val" id="pendingWithdrawals">—</div><div class="stat-lbl">Pending Withdrawals</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon si-purple"><i class="fas fa-coins"></i></div>
+                        <div><div class="stat-val" id="totalCoins">—</div><div class="stat-lbl">Total Coins Mined</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 24px; background: #fff; padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+                    <h3>Top Users</h3>
+                    <table style="width: 100%; text-align: left; margin-top: 16px;">
+                        <thead>
+                            <tr><th>Rank</th><th>Name</th><th>Coins</th><th>Tasks</th><th>Value</th></tr>
+                        </thead>
+                        <tbody id="leaderboardTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="usersSection" class="section">
+                <h2>Users</h2>
+                <table><tbody id="usersTable"></tbody></table>
+            </div>
+            
+            <div id="tasksSection" class="section" style="display:none">
+                <h2>Tasks</h2>
+                <button onclick="showTaskModal()">New Task</button>
+                <div id="taskTabs"></div>
+                <table><tbody id="tasksTable"></tbody></table>
+            </div>
+            
+            <div id="proofsSection" class="section" style="display:none">
+                <h2>Proof Review</h2>
+                <div id="proofsList"></div>
+            </div>
+
+            <div id="withdrawalsSection" class="section" style="display:none">
+                <h2>Withdrawals</h2>
+                <table><tbody id="withdrawalsTable"></tbody></table>
+            </div>
+
+            <div id="settingsSection" class="section" style="display:none">
+                <h2>App Settings</h2>
+                <input id="appName" placeholder="App Name">
+                <input id="appLogo" placeholder="Logo URL">
+                <input id="primaryColor" placeholder="Primary Color">
+                <input id="conversionRate" placeholder="Coins per Ruppee">
+                <input id="minWithdraw" placeholder="Min Withdraw">
+                <input id="referralBonus" placeholder="Referral Bonus">
+                <input id="adText" placeholder="Ad Text">
+                <button onclick="saveSettings()">Save Configuration</button>
+            </div>
+
+            <div id="notificationsSection" class="section" style="display:none">
+                <h2>Notifications</h2>
+                <input id="notifTitle" placeholder="Title">
+                <input id="notifMsg" placeholder="Message">
+                <input id="notifLink" placeholder="Link (Optional)">
+                <button onclick="sendNotification()">Send Notification</button>
+                <div id="notifList"></div>
+            </div>
+            
+            <!-- Modals -->
+            <div id="taskModal" class="modal" style="display:none; position:fixed; top:50%; left:50%; background:white; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.5);">
+                <h3 id="taskModalTitle"></h3>
+                <input id="taskTitle"><br>
+                <textarea id="taskDescription"></textarea><br>
+                <input id="taskCategory"><br>
+                <input id="taskReward" type="number"><br>
+                <input id="taskLink"><br>
+                <input id="taskBanner"><br>
+                <label><input type="checkbox" id="taskActive"> Active</label><br>
+                <button onclick="saveTask()">Save</button>
+                <button onclick="hideTaskModal()">Cancel</button>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+<script type="module">
+  async function initFirebase() {
+    try {
+      const res = await fetch('/firebase-applet-config.json');
+      const fbconfig = await res.json();
+      
+      firebase.initializeApp({
+        apiKey: fbconfig.apiKey,
+        authDomain: fbconfig.authDomain,
+        projectId: fbconfig.projectId,
+        storageBucket: fbconfig.storageBucket,
+        messagingSenderId: fbconfig.messagingSenderId,
+        appId: fbconfig.appId
+      });
+      const auth = firebase.auth();
+      const db   = firebase.firestore();
+      if (fbconfig.firestoreDatabaseId && db._delegate && db._delegate._databaseId) {
+        db._delegate._databaseId.database = fbconfig.firestoreDatabaseId;
+      }
+      db.settings({ experimentalAutoDetectLongPolling:true, merge:true });
+
+      window.auth = auth;
+      window.db = db;
+
+      let currentAdmin = null;
+      window.appSettingsUnsub = null;
+      window.editingTaskId = null;
+      window.allUsers = [];
+
+      auth.onAuthStateChanged(user => {
+          if (user) {
+              currentAdmin = user;
+              window.currentAdmin = currentAdmin;
+              if (window.showAdminPanel) window.showAdminPanel();
+              if (window.loadAppSettings) window.loadAppSettings();
+              if (window.loadDashboardData) window.loadDashboardData();
+          } else {
+              window.currentAdmin = null;
+              if (window.showAuthScreen) window.showAuthScreen();
+          }
+      });
+    } catch(err) {
+      console.error("Firebase init failed:", err);
+      // Remove loader to show error
+      document.getElementById('loader').style.display='none';
+      alert("Failed to initialize Firebase: " + err.message);
+    }
+  }
+
+  initFirebase();
+// Wait for functions to become available before adding DOM listener isn't needed anymore, as the firebase auth listener calls them safely.
+</script>
+
+<script>
+window.currentAdmin = null;
+window.appSettingsUnsub = null;
+window.editingTaskId = null;
+window.allUsers = [];
+
+/* ── SETTINGS ── */
+window.loadAppSettings = function loadAppSettings() {
+    window.appSettingsUnsub = window.db.collection('appSettings').doc('main').onSnapshot(doc => {
+        if (doc.exists) applySettings(doc.data());
+        else {
+            const def = { appName:'Pocket Money', logoUrl:'https://i.supaimg.com/f0a5f050-eb1b-4a70-992d-09b4d7ebc955/e97fb281-5ae7-48ce-863c-3d141a6a5651.jpg', conversionRate:1000, minWithdrawAmount:50, referralBonusCoins:1000, adText:'Watch this ad to continue.', primaryColor:'#30D158', updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
+            db.collection('appSettings').doc('main').set(def);
+        }
+    });
+}
+
+function applySettings(s) {
+    const name = s.appName || 'Pocket Money';
+    ['adminAppName','authBrandName'].forEach(id => { const el=document.getElementById(id); if(el)el.textContent=name; });
+    document.getElementById('adminPageTitle').textContent = name + ' Admin';
+    document.getElementById('loaderText').textContent = name + ' Admin';
+    ['sidebarLogo','authLogoIcon','loaderIcon'].forEach(id => {
+        const el=document.getElementById(id); if(!el)return;
+        if(s.logoUrl&&s.logoUrl.trim()) el.innerHTML=`<img src="${s.logoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
+        else el.textContent=name[0].toUpperCase();
+    });
+    if(s.primaryColor) document.documentElement.style.setProperty('--primary', s.primaryColor);
+}
+
+function adjColor(hex,amt) { return '#'+hex.replace(/^#/,'').replace(/../g,c=>('0'+Math.min(255,Math.max(0,parseInt(c,16)+amt)).toString(16)).slice(-2)); }
+
+/* ── AUTH ── */
+window.adminAuthGoogle = async function adminAuthGoogle() {
+    const errEl=document.getElementById('loginError');
+    errEl.style.display='none';
+    
+    const btn=document.getElementById('authBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Processing…';
+    btn.disabled=true;
+    
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const cred = await window.auth.signInWithPopup(provider);
+        // Ensure user document exists like in normal site
+        await window.db.collection("users").doc(cred.user.uid).set({
+           email: cred.user.email,
+           name: cred.user.displayName, role: 'admin',
+           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        
+        currentAdmin=cred.user;
+    } catch(e) {
+        errEl.textContent=e.message; errEl.style.display='block';
+        btn.innerHTML=originalText; 
+        btn.disabled=false;
+    }
+}
+window.adminLogout = function adminLogout() {
+    if(!confirm('Sign out of admin panel?'))return;
+    if(appSettingsUnsub)appSettingsUnsub();
+    auth.signOut().then(()=>showAuthScreen());
+}
+window.showAuthScreen = function showAuthScreen() {
+    document.getElementById('loader').style.display='none';
+    document.getElementById('authScreen').classList.add('visible');
+    document.getElementById('adminContainer').classList.remove('visible');
+}
+window.showAdminPanel = function showAdminPanel() {
+    document.getElementById('loader').style.display='none';
+    document.getElementById('authScreen').classList.remove('visible');
+    document.getElementById('adminContainer').classList.add('visible');
+    if(currentAdmin) {
+        document.getElementById('adminEmail').textContent=currentAdmin.email.split('@')[0];
+        document.getElementById('adminAvatar').textContent=currentAdmin.email[0].toUpperCase();
+    }
+}
+
+/* ── NAVIGATION ── */
+const SECTIONS = {dashboard:'Dashboard',users:'Users',tasks:'Tasks',proofs:'Proof Review',withdrawals:'Withdrawals',ads:'Ad Networks',settings:'App Settings',notifications:'Notifications'};
+window.goSection = function goSection(name) {
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById(name+'Section').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>{ if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(`'${name}'`)) n.classList.add('active'); });
+    document.getElementById('pageTitle').textContent=SECTIONS[name]||name;
+    const loaders = { users:loadUsers, tasks:()=>{document.querySelectorAll('#taskTabs .tab-btn').forEach((b,i)=>b.classList.toggle('active',i===0));loadTasks('all');}, proofs:()=>{document.querySelectorAll('#proofsSection .tab-btn').forEach((b,i)=>b.classList.toggle('active',i===0));loadProofs('pending');}, withdrawals:()=>{document.querySelectorAll('#withdrawalsSection .tab-btn').forEach((b,i)=>b.classList.toggle('active',i===0));loadWithdrawals('pending');}, ads:loadAdSettings, settings:loadSettings, notifications:loadNotifications };
+    if(loaders[name]) loaders[name]();
+}
+
+/* ── DASHBOARD ── */
+window.loadDashboardData = async function loadDashboardData() {
+    try {
+        const [usersSnap,tasksSnap,withdrawSnap] = await Promise.all([
+            db.collection('users').get(),
+            db.collection('tasks').where('active','==',true).get(),
+            db.collection('withdrawals').where('status','==','pending').get()
+        ]);
+        document.getElementById('totalUsers').textContent=usersSnap.size;
+        document.getElementById('totalTasks').textContent=tasksSnap.size;
+        document.getElementById('pendingWithdrawals').textContent=withdrawSnap.size;
+        let totalCoins=0;
+        usersSnap.forEach(d=>{ totalCoins+=(d.data().coins||0); });
+        document.getElementById('totalCoins').textContent=totalCoins.toLocaleString();
+        const tb=document.getElementById('leaderboardTable'); tb.innerHTML='';
+        const sorted=[]; usersSnap.forEach(d=>sorted.push({id:d.id,...d.data()}));
+        sorted.sort((a,b)=>(b.coins||0)-(a.coins||0)).slice(0,8).forEach((u,i)=>{
+            const tr=document.createElement('tr');
+            tr.innerHTML=`<td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td><td class="td-bold">${u.name||'—'}</td><td style="color:var(--primary);font-weight:700">${(u.coins||0).toLocaleString()}</td><td>${u.tasksCompleted||0}</td><td>₹${((u.coins||0)/1000).toFixed(2)}</td>`;
+            tb.appendChild(tr);
+        });
+    } catch(e) { console.error('[Dashboard]', e); }
+}
+
+/* ── USERS ── */
+window.loadUsers = async function loadUsers() {
+    try {
+        // Updated to remove orderBy('createdAt','desc') to avoid missing index error temporarily
+        const snap=await db.collection('users').get();
+        allUsers=[];
+        snap.forEach(d=>allUsers.push({id:d.id,...d.data()}));
+        allUsers.sort((a, b) => b.coins - a.coins);
+        renderUsers(allUsers);
+    } catch(e) { console.error('[Users]', e); }
+}
+window.renderUsers = function renderUsers(users) {
+    const tb=document.getElementById('usersTable'); tb.innerHTML='';
+    users.forEach(u=>{
+        const date=u.createdAt?new Date(u.createdAt.seconds*1000).toLocaleDateString():'—';
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td style="font-size:11px;color:var(--label3)">${u.id.slice(0,8)}…</td><td class="td-bold">${u.name||'—'}</td><td>${u.email||'—'}</td><td style="color:var(--primary);font-weight:700">${(u.coins||0).toLocaleString()}</td><td>${u.tickets||0}</td><td>₹${((u.coins||0)/1000).toFixed(2)}</td><td>${u.tasksCompleted||0}</td><td>${date}</td><td><span class="badge ${u.banned?'badge-danger':'badge-success'}">${u.banned?'Banned':'Active'}</span></td><td><button class="btn-sm bs-orange" onclick="window.adjustCoins('${u.id}','${u.name||'User'}')"><i class="fas fa-coins"></i></button><button class="btn-sm ${u.banned?'bs-green':'bs-red'}" style="margin-left:4px" onclick="window.toggleBan('${u.id}',${!!u.banned})"><i class="fas fa-${u.banned?'unlock':'ban'}"></i></button></td>`;
+        tb.appendChild(tr);
+    });
+    if(!users.length) tb.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--label3)">No users found</td></tr>`;
+}
+window.filterUsersLocal = function filterUsersLocal(q) {
+    const filtered=allUsers.filter(u=>(u.name||'').toLowerCase().includes(q.toLowerCase())||(u.email||'').toLowerCase().includes(q.toLowerCase()));
+    renderUsers(filtered);
+}
+window.adjustCoins = async function adjustCoins(uid,name) {
+    const v=prompt(`Adjust coins for ${name} (use +/- prefix or plain number to set):`);
+    if(v===null||v==='')return;
+    const num=parseInt(v);
+    if(isNaN(num)){alert('Invalid number');return;}
+    try {
+        if(v.startsWith('+')||v.startsWith('-')) await db.collection('users').doc(uid).update({coins:firebase.firestore.FieldValue.increment(num)});
+        else await db.collection('users').doc(uid).update({coins:num});
+        alert('✅ Coins updated!'); loadUsers();
+    } catch(e){alert('Error: '+e.message);}
+}
+window.toggleBan = async function toggleBan(uid,isBanned) {
+    if(!confirm(isBanned?'Unban this user?':'Ban this user?'))return;
+    try { await db.collection('users').doc(uid).update({banned:!isBanned}); alert('✅ Done!'); loadUsers(); }
+    catch(e){alert('Error: '+e.message);}
+}
+window.exportUsers = function exportUsers() {
+    const rows=[['UID','Name','Email','Coins','Tickets','Tasks','Banned']];
+    allUsers.forEach(u=>rows.push([u.id,u.name||'',u.email||'',u.coins||0,u.tickets||0,u.tasksCompleted||0,u.banned?'Yes':'No']));
+    const csv=rows.map(r=>r.join(',')).join('\n');
+    const a=document.createElement('a'); a.href='data:text/csv,'+encodeURIComponent(csv); a.download='users.csv'; a.click();
+}
+
+/* ── TASKS ── */
+let allTasksData=[];
+window.loadTasks = async function loadTasks(filter) {
+    try {
+        const snap=await db.collection('tasks').get();
+        allTasksData=[];
+        snap.forEach(d=>allTasksData.push({id:d.id,...d.data()}));
+        window.filterTasks(filter||'all',document.querySelector('#taskTabs .tab-btn.active'));
+    } catch(e){console.error('[Tasks]',e);}
+}
+window.filterTasks = function filterTasks(filter,btn) {
+    if(btn){document.querySelectorAll('#taskTabs .tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+    const list=filter==='all'?allTasksData:allTasksData.filter(t=>filter==='active'?t.active:!t.active);
+    const tb=document.getElementById('tasksTable'); tb.innerHTML='';
+    list.forEach(t=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td class="td-bold">${t.title||'—'}</td><td><span class="badge badge-info">${t.category||'—'}</span></td><td style="color:var(--primary);font-weight:700">${(t.reward||0).toLocaleString()} coins</td><td><span class="badge ${t.active?'badge-success':'badge-danger'}">${t.active?'Active':'Inactive'}</span></td><td><button class="btn-sm bs-blue" onclick="window.editTask('${t.id}')"><i class="fas fa-pen"></i></button> <button class="btn-sm bs-orange" onclick="window.toggleTask('${t.id}',${!!t.active})"><i class="fas fa-power-off"></i></button> <button class="btn-sm bs-red" onclick="window.deleteTask('${t.id}')"><i class="fas fa-trash"></i></button></td>`;
+        tb.appendChild(tr);
+    });
+    if(!list.length) tb.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--label3)">No tasks found</td></tr>`;
+}
+window.showTaskModal = function showTaskModal(){ editingTaskId=null; document.getElementById('taskModalTitle').textContent='Create New Task'; ['taskTitle','taskDescription','taskLink','taskBanner'].forEach(id=>document.getElementById(id).value=''); document.getElementById('taskReward').value=1000; document.getElementById('taskActive').checked=true; document.getElementById('taskModal').style.display='block'; }
+window.hideTaskModal = function hideTaskModal(){ document.getElementById('taskModal').style.display='none'; editingTaskId=null; }
+window.editTask = function editTask(id){ const t=allTasksData.find(x=>x.id===id); if(!t)return; editingTaskId=id; document.getElementById('taskModalTitle').textContent='Edit Task'; document.getElementById('taskTitle').value=t.title||''; document.getElementById('taskDescription').value=t.description||''; document.getElementById('taskCategory').value=t.category||'Instagram'; document.getElementById('taskReward').value=t.reward||1000; document.getElementById('taskLink').value=t.link||''; document.getElementById('taskBanner').value=t.bannerUrl||''; document.getElementById('taskActive').checked=!!t.active; document.getElementById('taskModal').style.display='block'; }
+window.saveTask = async function saveTask(){
+    const data={title:document.getElementById('taskTitle').value.trim(),description:document.getElementById('taskDescription').value.trim(),category:document.getElementById('taskCategory').value,reward:parseInt(document.getElementById('taskReward').value)||1000,link:document.getElementById('taskLink').value.trim(),bannerUrl:document.getElementById('taskBanner').value.trim(),active:document.getElementById('taskActive').checked,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    if(!data.title){alert('Please enter a task title');return;}
+    try {
+        if(editingTaskId) await db.collection('tasks').doc(editingTaskId).update(data);
+        else { data.createdAt=firebase.firestore.FieldValue.serverTimestamp(); await db.collection('tasks').add(data); }
+        alert('✅ Task saved!'); hideTaskModal(); loadTasks('all');
+    }catch(e){alert('Error: '+e.message);}
+}
+window.toggleTask = async function toggleTask(id,isActive){ try{await db.collection('tasks').doc(id).update({active:!isActive});loadTasks();}catch(e){alert('Error: '+e.message);} }
+window.deleteTask = async function deleteTask(id){ if(!confirm('Delete this task?'))return; try{await db.collection('tasks').doc(id).delete();alert('✅ Deleted!');loadTasks();}catch(e){alert('Error: '+e.message);} }
+
+/* ── PROOFS ── */
+window.loadProofs = async function loadProofs(status) {
+    try {
+        let q=db.collection('taskSubmissions');
+        if(status!=='all') q=q.where('status','==',status);
+        const snap=await q.get();
+        const pl=document.getElementById('proofsList'); pl.innerHTML='';
+        snap.forEach(doc=>{
+            const p=doc.data();
+            const date=p.createdAt?new Date(p.createdAt.seconds*1000).toLocaleString():'—';
+            const div=document.createElement('div'); div.className='proof-card';
+            div.innerHTML=`<div class="proof-info"><div class="proof-task">${p.taskTitle||'Unknown Task'}</div><div class="proof-meta">By <strong>${p.userName||'—'}</strong> · ${date}</div><div class="proof-text">${p.proof||'—'}</div></div><div class="proof-actions">${p.status==='pending'?`<button class="btn-sm bs-green" onclick="window.approveProof('${doc.id}','${p.userId}',${p.taskReward||0})"><i class="fas fa-check"></i> Approve</button><button class="btn-sm bs-red" onclick="window.rejectProof('${doc.id}')"><i class="fas fa-xmark"></i> Reject</button>`:`<span class="badge ${p.status==='approved'?'badge-success':'badge-danger'}">${p.status}</span>`}</div>`;
+            pl.appendChild(div);
+        });
+        if(!snap.size) pl.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="fas fa-circle-check"></i></div><p>No ${status} proofs</p></div>`;
+    }catch(e){console.error('[Proofs]',e);}
+}
+window.filterProofs = function filterProofs(s,btn){ document.querySelectorAll('#proofsSection .tab-btn').forEach(b=>b.classList.remove('active')); if(btn)btn.classList.add('active'); loadProofs(s); }
+window.approveProof = async function approveProof(proofId,userId,reward){
+    try {
+        await db.collection('taskSubmissions').doc(proofId).update({status:'approved',reviewedAt:firebase.firestore.FieldValue.serverTimestamp()});
+        if(userId&&reward>0) await db.collection('users').doc(userId).update({coins:firebase.firestore.FieldValue.increment(reward),tasksCompleted:firebase.firestore.FieldValue.increment(1)});
+        alert('✅ Proof approved!'); loadProofs('pending');
+    }catch(e){alert('Error: '+e.message);}
+}
+window.rejectProof = async function rejectProof(proofId){
+    const reason=prompt('Rejection reason (optional):'); if(reason===null)return;
+    try { await db.collection('taskSubmissions').doc(proofId).update({status:'rejected',adminNote:reason,reviewedAt:firebase.firestore.FieldValue.serverTimestamp()}); alert('✅ Rejected.'); loadProofs('pending'); }
+    catch(e){alert('Error: '+e.message);}
+}
+
+/* ── WITHDRAWALS ── */
+window.loadWithdrawals = async function loadWithdrawals(status,btn) {
+    if(btn){document.querySelectorAll('#withdrawalsSection .tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+    try {
+        let q=db.collection('withdrawals');
+        if(status!=='all') q=q.where('status','==',status);
+        const snap=await q.get();
+        const tb=document.getElementById('withdrawalsTable'); tb.innerHTML='';
+        snap.forEach(doc=>{
+            const w=doc.data();
+            const date=w.createdAt?new Date(w.createdAt.seconds*1000).toLocaleDateString():'—';
+            const tr=document.createElement('tr');
+            tr.innerHTML=`<td class="td-bold">${w.userName||'—'}</td><td style="color:var(--primary);font-weight:700">₹${(w.amount||0).toFixed(2)}</td><td>${(w.coins||0).toLocaleString()}</td><td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${w.details||'—'}</td><td>${date}</td><td><span class="badge ${w.status==='approved'?'badge-success':w.status==='rejected'?'badge-danger':'badge-warning'}">${w.status}</span></td><td>${w.status==='pending'?`<button class="btn-sm bs-green" onclick="window.processWithdrawal('${doc.id}','approved')"><i class="fas fa-check"></i> Pay</button> <button class="btn-sm bs-red" onclick="window.processWithdrawal('${doc.id}','rejected')"><i class="fas fa-xmark"></i></button>`:'—'}</td>`;
+            tb.appendChild(tr);
+        });
+        if(!snap.size) tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--label3)">No ${status} withdrawals</td></tr>`;
+    }catch(e){console.error('[Withdrawals]',e);}
+}
+window.filterWithdrawals = function filterWithdrawals(s,btn){loadWithdrawals(s,btn);}
+window.processWithdrawal = async function processWithdrawal(id,action){
+    const note=prompt(`${action==='approved'?'Payment note':'Rejection reason'} (optional):`); if(note===null)return;
+    try { await db.collection('withdrawals').doc(id).update({status:action,adminNote:note,processedAt:firebase.firestore.FieldValue.serverTimestamp()}); alert(`✅ Withdrawal ${action}`); loadWithdrawals('pending'); }
+    catch(e){alert('Error: '+e.message);}
+}
+
+/* ── AD SETTINGS ── */
+window.loadAdSettings = async function loadAdSettings() {
+    try {
+        const doc=await db.collection('appSettings').doc('main').get();
+        if(!doc.exists)return;
+        const s=doc.data();
+        const ads=s.adNetworks||{};
+        // AdMob
+        if(ads.admob){
+            setVal('admobAppId',ads.admob.appId||'');
+            setVal('admobBannerId',ads.admob.bannerId||'');
+            setVal('admobInterstitialId',ads.admob.interstitialId||'');
+            setVal('admobRewardedId',ads.admob.rewardedId||'');
+            setCheck('admobBannerEnabled',ads.admob.bannerEnabled!==false);
+            setCheck('admobInterstitialEnabled',ads.admob.interstitialEnabled!==false);
+            setCheck('admobRewardedEnabled',ads.admob.rewardedEnabled!==false);
+        }
+        // UTads
+        if(ads.utads){
+            setVal('utadsPublisherId',ads.utads.publisherId||'');
+            setVal('utadsZoneId',ads.utads.zoneId||'');
+            setVal('utadsScript',ads.utads.script||'');
+            setCheck('utadsEnabled',ads.utads.enabled!==false);
+            setCheck('utadsHome',ads.utads.showHome!==false);
+            setCheck('utadsTasks',!!ads.utads.showTasks);
+        }
+        // Adsterra
+        if(ads.adsterra){
+            setVal('adsterraBgUrl',ads.adsterra.bgUrl||'//pl27367156.profitableratecpm.com/e2/ba/c2/e2bac282b4bc01cb3ab75c85e68927bd.js');
+            setVal('adsterraPopupUrl',ads.adsterra.popupUrl||'');
+            setCheck('adsterraBgEnabled',ads.adsterra.bgEnabled!==false);
+            setCheck('adsterraPopupEnabled',!!ads.adsterra.popupEnabled);
+        }
+        // Popup
+        setVal('adText',s.adText||'Watch this ad to continue. Please wait...');
+        if(ads.popup){
+            setVal('adCountdown',ads.popup.countdown||5);
+            setVal('adPopupImage',ads.popup.image||'');
+            setCheck('popupBeforeSpin',ads.popup.beforeSpin!==false);
+            setCheck('popupBeforeGame',ads.popup.beforeGame!==false);
+            setCheck('popupBeforeTicket',ads.popup.beforeTicket!==false);
+        }
+    }catch(e){console.error('[Ads] Load failed:',e);}
+}
+function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v;}
+function setCheck(id,v){const el=document.getElementById(id);if(el)el.checked=!!v;}
+
+window.saveAdSettings = async function saveAdSettings() {
+    const adNetworks = {
+        admob: {
+            appId:document.getElementById('admobAppId').value.trim(),
+            bannerId:document.getElementById('admobBannerId').value.trim(),
+            interstitialId:document.getElementById('admobInterstitialId').value.trim(),
+            rewardedId:document.getElementById('admobRewardedId').value.trim(),
+            bannerEnabled:document.getElementById('admobBannerEnabled').checked,
+            interstitialEnabled:document.getElementById('admobInterstitialEnabled').checked,
+            rewardedEnabled:document.getElementById('admobRewardedEnabled').checked,
+        },
+        utads: {
+            publisherId:document.getElementById('utadsPublisherId').value.trim(),
+            zoneId:document.getElementById('utadsZoneId').value.trim(),
+            script:document.getElementById('utadsScript').value.trim(),
+            enabled:document.getElementById('utadsEnabled').checked,
+            showHome:document.getElementById('utadsHome').checked,
+            showTasks:document.getElementById('utadsTasks').checked,
+        },
+        adsterra: {
+            bgUrl:document.getElementById('adsterraBgUrl').value.trim(),
+            popupUrl:document.getElementById('adsterraPopupUrl').value.trim(),
+            bgEnabled:document.getElementById('adsterraBgEnabled').checked,
+            popupEnabled:document.getElementById('adsterraPopupEnabled').checked,
+        },
+        popup: {
+            countdown:parseInt(document.getElementById('adCountdown').value)||5,
+            image:document.getElementById('adPopupImage').value.trim(),
+            beforeSpin:document.getElementById('popupBeforeSpin').checked,
+            beforeGame:document.getElementById('popupBeforeGame').checked,
+            beforeTicket:document.getElementById('popupBeforeTicket').checked,
+        }
+    };
+    try {
+        await db.collection('appSettings').doc('main').set({
+            adNetworks, adText:document.getElementById('adText').value,
+            updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+        },{merge:true});
+        alert('✅ Ad settings saved! Changes applied live to user panel.');
+    }catch(e){alert('Error: '+e.message);}
+}
+
+/* ── APP SETTINGS ── */
+window.loadSettings = async function loadSettings() {
+    try {
+        const doc=await db.collection('appSettings').doc('main').get();
+        if(doc.exists){
+            const s=doc.data();
+            setVal('appName',s.appName||'Pocket Money');
+            setVal('appLogo',s.logoUrl||'');
+            setVal('conversionRate',s.conversionRate||1000);
+            setVal('minWithdraw',s.minWithdrawAmount||50);
+            setVal('referralBonus',s.referralBonusCoins||1000);
+            setVal('primaryColor',s.primaryColor||'#30D158');
+        }
+    }catch(e){console.error('[Settings]',e);}
+}
+window.saveSettings = async function saveSettings(){
+    const settings={appName:document.getElementById('appName').value,logoUrl:document.getElementById('appLogo').value,conversionRate:parseInt(document.getElementById('conversionRate').value)||1000,minWithdrawAmount:parseInt(document.getElementById('minWithdraw').value)||50,referralBonusCoins:parseInt(document.getElementById('referralBonus').value)||1000,primaryColor:document.getElementById('primaryColor').value,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    try { await db.collection('appSettings').doc('main').set(settings,{merge:true}); applySettings(settings); alert('✅ Settings saved!'); }
+    catch(e){alert('Error: '+e.message);}
+}
+
+/* ── NOTIFICATIONS ── */
+window.loadNotifications = async function loadNotifications() {
+    try {
+        const snap=await db.collection('notifications').orderBy('createdAt','desc').limit(10).get();
+        const nl=document.getElementById('notifList'); nl.innerHTML='';
+        snap.forEach(doc=>{
+            const n=doc.data();
+            const date=n.createdAt?new Date(n.createdAt.seconds*1000).toLocaleString():'—';
+            const div=document.createElement('div'); div.className='notif-row';
+            div.innerHTML=`<div class="notif-dot"></div><div><div class="notif-title">${n.title||'—'}</div><div class="notif-msg">${(n.message||'').substring(0,80)}${(n.message||'').length>80?'…':''}</div><div class="notif-date">🕒 ${date}</div></div>`;
+            nl.appendChild(div);
+        });
+        if(!snap.size) nl.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class="fas fa-bell-slash"></i></div><p>No notifications sent yet</p></div>`;
+    }catch(e){console.error('[Notifications]',e);}
+}
+window.sendNotification = async function sendNotification(){
+    const title=document.getElementById('notifTitle').value.trim();
+    const msg=document.getElementById('notifMsg').value.trim();
+    const link=document.getElementById('notifLink').value.trim();
+    if(!title||!msg){alert('Please fill title and message');return;}
+    try {
+        await db.collection('notifications').add({title,message:msg,link:link||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        alert('✅ Notification sent to all users!');
+        ['notifTitle','notifMsg','notifLink'].forEach(id=>document.getElementById(id).value='');
+        loadNotifications();
+    }catch(e){alert('Error: '+e.message);}
+}
+
+window.addEventListener('beforeunload', ()=>{ if(appSettingsUnsub)appSettingsUnsub(); });
+</script>
+</body>
+</html>
